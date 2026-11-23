@@ -8,7 +8,9 @@ public class HW1MechanicsEditorTools : ModuleRules
         PrivateDependencyModuleNames.AddRange(new string[]
         {
             "Core", "CoreUObject", "Engine", "UnrealEd", "BlueprintGraph",
-            "BlueprintEditorLibrary", "Kismet", "AnimGraph", "HW1Mechanics"
+            "BlueprintEditorLibrary", "Kismet", "AnimGraph", "HW1Mechanics",
+            "AIModule", "AIGraph", "BehaviorTreeEditor", "AssetRegistry",
+            "PCG", "NavigationSystem"
         });
     }
 }

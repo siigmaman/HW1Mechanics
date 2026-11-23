@@ -15,4 +15,7 @@ public:
 
     UFUNCTION(BlueprintCallable, Category = "HW1 Setup")
     static bool AddSprintAnimation();
+
+    UFUNCTION(BlueprintCallable, Category = "HW2 Setup")
+    static bool SetupHW2Assets();
 };

@@ -12,7 +12,10 @@ public class HW1Mechanics : ModuleRules
             "CoreUObject",
             "Engine",
             "InputCore",
-            "EnhancedInput"
+            "EnhancedInput",
+            "AIModule",
+            "GameplayTasks",
+            "NavigationSystem"
         });
     }
 }
