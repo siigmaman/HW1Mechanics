@@ -18,4 +18,7 @@ public:
 
     UFUNCTION(BlueprintCallable, Category = "HW2 Setup")
     static bool SetupHW2Assets();
+
+    UFUNCTION(BlueprintCallable, Category = "HW2 Setup")
+    static bool BuildHW2Navigation();
 };

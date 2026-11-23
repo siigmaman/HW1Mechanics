@@ -57,5 +57,4 @@ private:
     void BindToPlayerInteraction();
     void ClearFleeState();
     void SetTargetActor(AActor* TargetActor);
-    void RestartBehaviorTree();
 };

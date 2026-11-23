@@ -9,6 +9,12 @@ UHWBTDecorator_BlackboardState::UHWBTDecorator_BlackboardState()
     FlowAbortMode = EBTFlowAbortMode::Both;
 }
 
+void UHWBTDecorator_BlackboardState::InitializeFromAsset(UBehaviorTree& Asset)
+{
+    BlackboardKey.SelectedKeyName = BlackboardKeyName;
+    Super::InitializeFromAsset(Asset);
+}
+
 bool UHWBTDecorator_BlackboardState::CalculateRawConditionValue(
     UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) const
 {

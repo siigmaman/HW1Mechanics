@@ -37,6 +37,12 @@ EBTNodeResult::Type UHWBTTask_MoveToBlackboard::ExecuteTask(
     {
         return EBTNodeResult::Succeeded;
     }
+    if (Result == EPathFollowingRequestResult::Failed)
+    {
+        UE_LOG(
+            LogTemp, Warning, TEXT("HW2: MoveTo request failed for blackboard key %s"),
+            *BlackboardKeyName.ToString());
+    }
     return Result == EPathFollowingRequestResult::RequestSuccessful
         ? EBTNodeResult::InProgress
         : EBTNodeResult::Failed;

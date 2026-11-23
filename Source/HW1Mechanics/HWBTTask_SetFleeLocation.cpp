@@ -24,6 +24,7 @@ EBTNodeResult::Type UHWBTTask_SetFleeLocation::ExecuteTask(
         : nullptr;
     if (!Pawn || !Threat || !Blackboard || !Navigation)
     {
+        UE_LOG(LogTemp, Warning, TEXT("HW2: flee task missing pawn, threat, blackboard or navigation"));
         return EBTNodeResult::Failed;
     }
 
@@ -42,9 +43,13 @@ EBTNodeResult::Type UHWBTTask_SetFleeLocation::ExecuteTask(
     if (!Navigation->ProjectPointToNavigation(
             DesiredLocation, ProjectedLocation, FVector(500.0f, 500.0f, 300.0f)))
     {
+        UE_LOG(LogTemp, Warning, TEXT("HW2: flee destination could not be projected to NavMesh"));
         return EBTNodeResult::Failed;
     }
 
     Blackboard->SetValueAsVector(FleeLocationKey, ProjectedLocation.Location);
+    UE_LOG(
+        LogTemp, Display, TEXT("HW2: flee destination set to %s"),
+        *ProjectedLocation.Location.ToCompactString());
     return EBTNodeResult::Succeeded;
 }

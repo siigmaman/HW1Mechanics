@@ -3,6 +3,7 @@
 #include "BehaviorTree/BehaviorTree.h"
 #include "BehaviorTree/BehaviorTreeComponent.h"
 #include "BehaviorTree/BlackboardComponent.h"
+#include "Engine/Engine.h"
 #include "HWCharacter.h"
 #include "Kismet/GameplayStatics.h"
 #include "Perception/AIPerceptionComponent.h"
@@ -77,6 +78,10 @@ void AHWAIController::OnPossess(APawn* InPawn)
     {
         UE_LOG(LogTemp, Error, TEXT("HW2: Behavior Tree could not start"));
     }
+    else
+    {
+        UE_LOG(LogTemp, Display, TEXT("HW2: AI ready; Behavior Tree started"));
+    }
 
     BindToPlayerInteraction();
 }
@@ -114,6 +119,7 @@ void AHWAIController::BindToPlayerInteraction()
         BoundPlayer = Player;
         Player->OnInteractionTriggered.AddUniqueDynamic(
             this, &AHWAIController::HandlePlayerInteraction);
+        UE_LOG(LogTemp, Display, TEXT("HW2: AI bound to player interaction"));
     }
 }
 
@@ -139,10 +145,17 @@ void AHWAIController::HandlePlayerInteraction()
 {
     APawn* ControlledPawn = GetPawn();
     AHWCharacter* Player = BoundPlayer.Get();
-    if (!ControlledPawn || !Player ||
-        FVector::DistSquared(ControlledPawn->GetActorLocation(), Player->GetActorLocation()) >
-            FMath::Square(InteractionReactionRadius))
+    if (!ControlledPawn || !Player)
     {
+        UE_LOG(LogTemp, Warning, TEXT("HW2: interaction received without AI pawn or player"));
+        return;
+    }
+
+    const float Distance = FVector::Dist(
+        ControlledPawn->GetActorLocation(), Player->GetActorLocation());
+    if (Distance > InteractionReactionRadius)
+    {
+        UE_LOG(LogTemp, Display, TEXT("HW2: interaction ignored at distance %.0f"), Distance);
         return;
     }
 
@@ -154,7 +167,13 @@ void AHWAIController::HandlePlayerInteraction()
 
     GetWorldTimerManager().SetTimer(
         FleeTimerHandle, this, &AHWAIController::ClearFleeState, FleeDuration, false);
-    RestartBehaviorTree();
+
+    UE_LOG(LogTemp, Display, TEXT("HW2: FLEE triggered at distance %.0f"), Distance);
+    if (GEngine)
+    {
+        GEngine->AddOnScreenDebugMessage(
+            -1, 2.0f, FColor::Red, TEXT("AI: FLEE! (interaction detected)"));
+    }
 }
 
 void AHWAIController::ClearFleeState()
@@ -169,7 +188,6 @@ void AHWAIController::ClearFleeState()
     {
         Blackboard->ClearValue(HWAIKeys::TargetActor);
     }
-    RestartBehaviorTree();
 }
 
 void AHWAIController::SetTargetActor(AActor* TargetActor)
@@ -186,14 +204,5 @@ void AHWAIController::SetTargetActor(AActor* TargetActor)
     else
     {
         Blackboard->ClearValue(HWAIKeys::TargetActor);
-    }
-    RestartBehaviorTree();
-}
-
-void AHWAIController::RestartBehaviorTree()
-{
-    if (BehaviorTreeComponent && BehaviorTreeComponent->TreeHasBeenStarted())
-    {
-        BehaviorTreeComponent->RestartTree(EBTRestartMode::CompleteRestart);
     }
 }

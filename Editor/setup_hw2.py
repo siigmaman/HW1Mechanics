@@ -46,7 +46,9 @@ for actor in (enemy, nav_volume, pcg_volume):
         pass
 
 level_subsystem = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
-if not level_subsystem.save_current_level():
+if not unreal.HWEditorSetupLibrary.build_hw2_navigation():
+    raise RuntimeError("AI spawn is not covered by navigation")
+if not level_subsystem.save_all_dirty_levels():
     raise RuntimeError("Could not save the Third Person level")
 
 for path in (

@@ -47,6 +47,8 @@
 #include "Elements/PCGStaticMeshSpawner.h"
 #include "Elements/PCGTransformPoints.h"
 #include "UObject/Package.h"
+#include "Editor.h"
+#include "NavigationSystem.h"
 
 bool UHWEditorSetupLibrary::AddInteractionPrint()
 {
@@ -452,9 +454,21 @@ bool BuildBehaviorTree(UBlackboardData* Blackboard, UBehaviorTree*& OutTree)
     }
 
     OutTree->BTGraph = Graph;
+    // Subnode insertion must not rebuild a partially constructed runtime tree.
+    Graph->LockUpdates();
     Graph->GetSchema()->CreateDefaultNodesForGraph(*Graph);
     Graph->OnCreated();
     Graph->Initialize();
+    Graph->UnlockUpdates();
+
+    if (!OutTree->RootNode || OutTree->RootNode->Children.Num() != 3
+        || OutTree->RootNode->Children[0].Decorators.Num() != 1
+        || OutTree->RootNode->Children[1].Decorators.Num() != 1
+        || OutTree->RootNode->Children[2].Decorators.Num() != 1)
+    {
+        UE_LOG(LogTemp, Error, TEXT("HW2: runtime tree lost its state decorators"));
+        return false;
+    }
 
     int32 GraphNodeCount = 0;
     int32 MissingInstanceCount = 0;
@@ -575,4 +589,21 @@ bool UHWEditorSetupLibrary::SetupHW2Assets()
         UE_LOG(LogTemp, Error, TEXT("HW2: asset generation failed"));
     }
     return bSuccess;
+}
+
+bool UHWEditorSetupLibrary::BuildHW2Navigation()
+{
+    UWorld* World = GEditor->GetEditorWorldContext().World();
+    UNavigationSystemV1* Navigation = UNavigationSystemV1::GetCurrent(World);
+    if (!Navigation) { return false; }
+    FlushAsyncLoading();
+    World->FlushLevelStreaming();
+    Navigation->RemoveNavigationBuildLock(ENavigationBuildLock::AsyncLoadLock,
+        UNavigationSystemV1::ELockRemovalRebuildAction::NoRebuild);
+    Navigation->Build();
+    FNavLocation Projected;
+    const bool bValid = Navigation->ProjectPointToNavigation(
+        FVector(0, 1200, 110), Projected, FVector(200, 200, 300));
+    UE_LOG(LogTemp, Display, TEXT("HW2_NAV_VALID: %d"), bValid);
+    return bValid;
 }
