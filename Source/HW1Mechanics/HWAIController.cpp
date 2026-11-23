@@ -153,7 +153,7 @@ void AHWAIController::HandlePlayerInteraction()
 
     const float Distance = FVector::Dist(
         ControlledPawn->GetActorLocation(), Player->GetActorLocation());
-    if (Distance > InteractionReactionRadius)
+    if (!Player->IsWithinInteractionRange(ControlledPawn))
     {
         UE_LOG(LogTemp, Display, TEXT("HW2: interaction ignored at distance %.0f"), Distance);
         return;

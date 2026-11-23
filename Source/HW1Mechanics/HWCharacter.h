@@ -19,6 +19,14 @@ public:
     virtual void Tick(float DeltaSeconds) override;
     virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 
+    UFUNCTION(BlueprintCallable, Category = "Interaction")
+    bool TryInteract();
+
+    UFUNCTION(BlueprintPure, Category = "Interaction")
+    bool CanInteract() const;
+
+    bool IsWithinInteractionRange(const AActor* Target) const;
+
     UPROPERTY(BlueprintAssignable, Category = "Interaction")
     FOnInteractionTriggered OnInteractionTriggered;
 
@@ -33,6 +41,9 @@ public:
 
 protected:
     virtual void BeginPlay() override;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Interaction", meta = (ClampMin = "0", Units = "cm"))
+    float InteractionRange = 300.0f;
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input")
     TObjectPtr<UInputAction> SprintAction;

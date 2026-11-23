@@ -2,7 +2,9 @@
 
 #include "EnhancedInputComponent.h"
 #include "Engine/Engine.h"
+#include "EngineUtils.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "HWAICharacter.h"
 #include "InputAction.h"
 
 AHWCharacter::AHWCharacter()
@@ -60,7 +62,38 @@ void AHWCharacter::SetSprinting(bool bEnabled)
 
 void AHWCharacter::Interact()
 {
+    TryInteract();
+}
+
+bool AHWCharacter::IsWithinInteractionRange(const AActor* Target) const
+{
+    return IsValid(Target) && FVector::DistSquared(GetActorLocation(), Target->GetActorLocation())
+        <= FMath::Square(InteractionRange);
+}
+
+bool AHWCharacter::CanInteract() const
+{
+    if (!GetWorld()) { return false; }
+    for (TActorIterator<AHWAICharacter> Enemy(GetWorld()); Enemy; ++Enemy)
+    {
+        if (IsWithinInteractionRange(*Enemy)) { return true; }
+    }
+    return false;
+}
+
+bool AHWCharacter::TryInteract()
+{
+    if (!CanInteract())
+    {
+        if (IsLocallyControlled() && GEngine)
+        {
+            GEngine->AddOnScreenDebugMessage(41233, 1.5f, FColor::Silver,
+                FString::Printf(TEXT("Move closer to AI (within %.0f m)"), InteractionRange / 100.0f));
+        }
+        return false;
+    }
     OnInteractionTriggered.Broadcast();
+    return true;
 }
 
 void AHWCharacter::RelayInteractionToBlueprint()
@@ -92,6 +125,14 @@ void AHWCharacter::Tick(float DeltaSeconds)
 
     if (IsLocallyControlled() && GEngine)
     {
+        if (CanInteract())
+        {
+            GEngine->AddOnScreenDebugMessage(41232, 0.0f, FColor::Green, TEXT("E - Scare AI"));
+        }
+        else
+        {
+            GEngine->RemoveOnScreenDebugMessage(41232);
+        }
         GEngine->AddOnScreenDebugMessage(
             41231, 0.0f, FColor::Yellow,
             FString::Printf(TEXT("Stamina: %.0f / %.0f"), Stamina, MaxStamina));

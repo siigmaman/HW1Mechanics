@@ -10,6 +10,8 @@
 #include "BehaviorTree/BehaviorTreeComponent.h"
 #include "BehaviorTree/BTTaskNode.h"
 #include "BehaviorTree/BlackboardComponent.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "../HW1Mechanics/HWAICharacter.h"
 #include "../HW1Mechanics/HWAIController.h"
 #include "../HW1Mechanics/HWCharacter.h"
@@ -108,13 +110,33 @@ public:
             }
             Player->SetActorLocation(FVector(-600, 900, 110), false, nullptr, ETeleportType::TeleportPhysics);
             Enemy->SetActorLocation(FVector(0, 900, 110), false, nullptr, ETeleportType::TeleportPhysics);
+            Test->TestFalse(TEXT("E is rejected at six metres"), Player->TryInteract());
+            Test->TestFalse(TEXT("Distant E does not trigger flee"), BB->GetValueAsBool(TEXT("IsFleeing")));
+            Player->SetActorLocation(FVector(-301, 900, 110), false, nullptr, ETeleportType::TeleportPhysics);
+            Test->TestFalse(TEXT("E is unavailable outside three metres"), Player->CanInteract());
+            Player->SetActorLocation(FVector(-300, 900, 110), false, nullptr, ETeleportType::TeleportPhysics);
+            Test->TestTrue(TEXT("E is available at exactly three metres"), Player->CanInteract());
+            Player->SetActorLocation(FVector(-250, 900, 110), false, nullptr, ETeleportType::TeleportPhysics);
+            // Headless tests must evaluate the pose even without a rendered viewport.
+            Enemy->GetMesh()->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::AlwaysTickPoseAndRefreshBones;
             Start = Enemy->GetActorLocation();
             DistanceBefore = FVector::Dist2D(Start, Player->GetActorLocation());
-            Player->OnInteractionTriggered.Broadcast();
+            Test->TestTrue(TEXT("E is accepted nearby"), Player->TryInteract());
             Test->TestTrue(TEXT("Interaction sets IsFleeing"), BB->GetValueAsBool(TEXT("IsFleeing")));
             StartTime = World->GetTimeSeconds();
             Phase = 1;
             return false;
+        }
+        const FName LimbBones[] = {TEXT("foot_l"), TEXT("foot_r"), TEXT("hand_l"), TEXT("hand_r")};
+        if (Phase == 1 && World->GetTimeSeconds() - StartTime > 0.4f && Enemy->GetVelocity().Size2D() > 100.0f)
+        {
+            for (int32 Index = 0; Index < 4; ++Index)
+            {
+                const FVector Position = Enemy->GetMesh()->GetSocketTransform(LimbBones[Index], RTS_Component).GetLocation();
+                if (!bCapturedPose) { InitialPose[Index] = Position; }
+                MaxLimbTravel[Index] = FMath::Max(MaxLimbTravel[Index], float(FVector::Dist(InitialPose[Index], Position)));
+            }
+            bCapturedPose = true;
         }
         if (Phase == 1 && World->GetTimeSeconds() - StartTime >= 2.0f)
         {
@@ -128,6 +150,11 @@ public:
                 Moved, DistanceBefore, DistanceAfter, *BB->GetValueAsVector(TEXT("FleeLocation")).ToCompactString()));
             Test->TestTrue(TEXT("AI actually moved at least 100 cm"), Moved > 100.0f);
             Test->TestTrue(TEXT("AI moved away from player"), DistanceAfter > DistanceBefore + 100.0f);
+            for (int32 Index = 0; Index < 4; ++Index)
+            {
+                Test->AddInfo(FString::Printf(TEXT("HW2_ANIMATION: %s travel=%.1f cm"), *LimbBones[Index].ToString(), MaxLimbTravel[Index]));
+                Test->TestTrue(FString::Printf(TEXT("Moving AI animates %s"), *LimbBones[Index].ToString()), MaxLimbTravel[Index] > 5.0f);
+            }
             Phase = 2;
         }
         if (Phase == 2 && World->GetTimeSeconds() - StartTime >= 4.5f)
@@ -144,6 +171,9 @@ private:
     FVector Start = FVector::ZeroVector;
     float StartTime = 0;
     float DistanceBefore = 0;
+    bool bCapturedPose = false;
+    FVector InitialPose[4];
+    float MaxLimbTravel[4] = {};
 };
 
 bool FHW2RuntimeTest::RunTest(const FString& Parameters)

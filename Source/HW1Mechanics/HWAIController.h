@@ -38,9 +38,6 @@ private:
     TObjectPtr<UBehaviorTree> BehaviorTreeAsset;
 
     UPROPERTY(EditDefaultsOnly, Category = "AI|Flee")
-    float InteractionReactionRadius = 1400.0f;
-
-    UPROPERTY(EditDefaultsOnly, Category = "AI|Flee")
     float FleeDuration = 4.0f;
 
     TWeakObjectPtr<AHWCharacter> BoundPlayer;

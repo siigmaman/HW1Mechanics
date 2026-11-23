@@ -17,6 +17,8 @@ AHWAICharacter::AHWAICharacter()
     Movement->bOrientRotationToMovement = true;
     Movement->RotationRate = FRotator(0.0f, 540.0f, 0.0f);
     Movement->MaxWalkSpeed = 450.0f;
+    // ABP_Unarmed enters locomotion when both speed and acceleration are nonzero.
+    Movement->GetNavMovementProperties()->bUseAccelerationForPaths = true;
 
     AIControllerClass = AHWAIController::StaticClass();
     AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
